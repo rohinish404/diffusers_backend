@@ -12,4 +12,6 @@ So, diffusers lib present on hugging face provides various pipelines to load pre
 One thing to keep in mind (struggled a lot with it) - on macbooks, you can use the device 'mps' instead of 'cuda' for faster generation of images.
 Next up, trying to use a ddpm/ddim scheduler and model for image generation which generates an image from noise. Will use a UNet2D model for this which generates an image of the same shape as input. The way this works is - 
 
+Some things i had thought of - https://app.eraser.io/workspace/m5aXyZfI4WYHwhaJghHi?origin=share
+
 
