@@ -4,9 +4,9 @@ import torch
 from transformers import CLIPTextModel, CLIPTokenizer
 from diffusers import AutoencoderKL, UNet2DConditionModel, PNDMScheduler
 from diffusers import UniPCMultistepScheduler
-
-class StableDiffusionPipeline:
-    def __init__(self, model_name, seed, device = "cpu"):
+from .schedulers import SCHEDULER_MAP
+class StableDiffusionPipelineMine:
+    def __init__(self, model_name, scheduler, seed, device = "cpu"):
         self.vae = AutoencoderKL.from_pretrained(model_name, subfolder="vae", use_safetensors=True)
         
         self.tokenizer = CLIPTokenizer.from_pretrained(model_name, subfolder="tokenizer")
@@ -16,14 +16,16 @@ class StableDiffusionPipeline:
         self.unet = UNet2DConditionModel.from_pretrained(
             model_name, subfolder="unet", use_safetensors=True
         )
-        self.scheduler = UniPCMultistepScheduler.from_pretrained(model_name, subfolder="scheduler")
+        self.set_scheduler = SCHEDULER_MAP[scheduler].value
+        self.scheduler = self.set_scheduler.from_pretrained(model_name, subfolder="scheduler")
         self.seed = seed
-
+    
         self.torch_device = device
         self.vae.to(self.torch_device)
         self.text_encoder.to(self.torch_device)
         self.unet.to(self.torch_device)
         self.generator = torch.manual_seed(self.seed) 
+        
     
     def generate_embeddings(self,prompt, batch_size):
         text_input = self.tokenizer(
@@ -102,10 +104,4 @@ class StableDiffusionPipeline:
 
 
 
-#         image = (image / 2 + 0.5).clamp(0, 1).squeeze()
-#         image = (image.permute(1, 2, 0) * 255).to(torch.uint8).cpu().numpy()
-#         images = (image * 255).round().astype("uint8")
-#         image = Image.fromarray(image)
-#         image            
-                
 

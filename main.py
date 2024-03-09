@@ -9,8 +9,8 @@ from io import BytesIO
 from PIL import Image
 import numpy as np
 import tqdm
-from stableDiffusion.pipeline import StableDiffusionPipeline
-
+from stableDiffusion.pipeline import StableDiffusionPipelineMine
+from stableDiffusion.schedulers import SCHEDULER_MAP
 app = FastAPI()
 
 app.add_middleware(
@@ -39,6 +39,7 @@ class StableDiffusionRequest(BaseModel):
     height: int
     guidanceScale: float
     numInferenceSteps: int
+    scheduler: str
         
 repo_id = "google/ddpm-church-256"
 
@@ -108,8 +109,9 @@ async def stable_diffusion_pipeline(request_data: StableDiffusionRequest):
     height = request_data.height
     guidance_scale = request_data.guidanceScale
     num_inference_steps = request_data.numInferenceSteps
+    scheduler = request_data.scheduler
     
-    sd_pipe = StableDiffusionPipeline(model_name=model_name, seed=seed)
+    sd_pipe = StableDiffusionPipelineMine(model_name=model_name, seed=seed, scheduler=scheduler)
     
     image = sd_pipe.generate_image([prompt], height, width, num_inference_steps, guidance_scale)
     
