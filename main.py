@@ -9,7 +9,8 @@ from io import BytesIO
 from PIL import Image
 import numpy as np
 import tqdm
-
+from stableDiffusion.pipeline import StableDiffusionPipelineMine
+from stableDiffusion.schedulers import SCHEDULER_MAP
 app = FastAPI()
 
 app.add_middleware(
@@ -29,7 +30,17 @@ class ImageGenerationRequest(BaseModel):
     height: int
     guidanceScale: float
     negativePrompt: str
-    
+ 
+class StableDiffusionRequest(BaseModel):
+    model_name: str
+    seed: int
+    prompt: str
+    width: int
+    height: int
+    guidanceScale: float
+    numInferenceSteps: int
+    scheduler: str
+        
 repo_id = "google/ddpm-church-256"
 
 #heartbeat
@@ -88,4 +99,27 @@ async def custom_denoising():
     image.save(image_path)
     return {"status": "success", "image_path": image_path}   
     
+
+@app.post("/stable_diffusion")
+async def stable_diffusion_pipeline(request_data: StableDiffusionRequest):
+    model_name = request_data.model_name
+    seed = request_data.seed
+    prompt = request_data.prompt
+    width = request_data.width
+    height = request_data.height
+    guidance_scale = request_data.guidanceScale
+    num_inference_steps = request_data.numInferenceSteps
+    scheduler = request_data.scheduler
     
+    sd_pipe = StableDiffusionPipelineMine(model_name=model_name, seed=seed, scheduler=scheduler)
+    
+    image = sd_pipe.generate_image([prompt], height, width, num_inference_steps, guidance_scale)
+    
+    image = (image / 2 + 0.5).clamp(0, 1).squeeze()
+    image = (image.permute(1, 2, 0) * 255).to(torch.uint8).cpu().numpy()
+    image = (image * 255).round().astype("uint8")
+    image = Image.fromarray(image)
+    
+    image_path = os.path.join(save_directory, "generated_image.png")
+    image.save(image_path)
+    return {"status": "success", "image_path": image_path}     
